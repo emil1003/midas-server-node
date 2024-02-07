@@ -1,0 +1,490 @@
+openapi: 3.0.3
+info:
+  description: "API Specification for Midas"
+  version: 1.0.0
+  title: Midas
+  license:
+    name: MIT
+servers:
+  - url: https://midas.example.com/v1
+    description: Example server
+tags:
+  - name: User
+    description: User operations
+  - name: Account
+    description: Account operations
+  - name: Currency
+    description: Currency operations
+  - name: Transaction
+    description: Transaction operations
+paths:
+  /user:
+    get:
+      tags:
+        - User
+      summary: Get user object
+      description: Get the user object that is the subject of the supplied token.
+      operationId: getUser
+      responses:
+        "200":
+          description: User gotten successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /user/username:
+    put:
+      tags:
+        - User
+      summary: Change username
+      description: Change the username of the user that is the subject of the supplied token.
+      operationId: putUsername
+      requestBody:
+        $ref: "#/components/requestBodies/Username"
+      responses:
+        "204":
+          description: Username changed successfully
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /accounts:
+    get:
+      tags:
+        - Account
+      summary: Get all accounts
+      description: Get all accounts that are owned by the user that is the subject of the supplied token.
+      operationId: getAccounts
+      responses:
+        "200":
+          description: Accounts gotten successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      accounts:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Account"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  "/accounts/{accid}":
+    get:
+      tags:
+        - Account
+      summary: Get specific account
+      description: Get a specific account if it is owned by the user that is the subject of the supplied token.
+      operationId: getAccount
+      parameters:
+        - name: accid
+          in: path
+          description: ID of the account to be fetched
+          required: true
+          schema:
+            type: string
+            format: mongoid
+      responses:
+        "200":
+          description: Account gotten successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      account:
+                        $ref: "#/components/schemas/Account"
+          links:
+            transactions:
+              operationId: getAccountTransactions
+              parameters:
+                accid: $request.path.accid
+            label:
+              operationId: putAccountLabel
+              parameters:
+                accid: $request.path.accid
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  "/accounts/{accid}/transactions":
+    get:
+      tags:
+        - Account
+      summary: Get transactions on specific account
+      description: Get transactions of a specific account if it is owned by the user that is the subject of the supplied token.
+      operationId: getAccountTransactions
+      parameters:
+        - name: accid
+          in: path
+          description: ID of the account to fetch transactions from
+          required: true
+          schema:
+            type: string
+            format: mongoid
+        - name: limit
+          in: query
+          description: Limit number of transactions to fetch
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+        - name: before
+          in: query
+          description: Fetch only transactions older than this timestamp
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Transactions gotten successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Transaction"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  "/accounts/{accid}/label":
+    put:
+      tags:
+        - Account
+      summary: Change account label
+      description: Change the label of a given account if it is owned by the user that is the subject of the supplied token.
+      operationId: putAccountLabel
+      parameters:
+        - name: accid
+          in: path
+          description: ID of the account to be labeled
+          required: true
+          schema:
+            type: string
+            format: mongoid
+      requestBody:
+        $ref: "#/components/requestBodies/Label"
+      responses:
+        "200":
+          description: Account label changed successfully
+          content:
+            application/json:
+              schema:
+                  $ref: "#/components/schemas/Response"
+        "204":
+          description: Account label already was the requested value
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /currencies:
+    get:
+      tags:
+        - Currency
+      summary: Get all currencies
+      description: Get an array containing all currencies that are registered at this instance.
+      operationId: getCurrencies
+      security:
+        - {}
+      responses:
+        "200":
+          description: Currencies gotten successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      currencies:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Currency"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  "/currencies/{curid}":
+    get:
+      tags:
+        - Currency
+      summary: Get specific currency
+      description: Get a specific currency from this instance.
+      operationId: getCurrency
+      security:
+        - {}
+      parameters:
+        - name: curid
+          in: path
+          description: ID of the currency to be fetched
+          required: true
+          schema:
+            type: string
+            format: mongoid
+      responses:
+        "200":
+          description: Currency gotten successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      currency:
+                        $ref: "#/components/schemas/Currency"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  "/transactions/{trid}":
+    get:
+      tags:
+        - Transaction
+      summary: Get a specific transaction
+      description: Get a specific transaction if the user owns any of the involved accounts.
+      operationId: getTransaction
+      parameters:
+        - name: trid
+          in: path
+          description: ID of the transaction to fetch
+          required: true
+          schema:
+            type: string
+            format: mongoid
+      responses:
+        "200":
+          description: Transaction gotten successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      transaction:
+                        $ref: "#/components/schemas/Transaction"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /transactions/new:
+    post:
+      tags:
+        - Transaction
+      summary: Create a new transaction
+      description: Post a new transaction between accounts, where the user owns the outgoing 'source' account.
+      operationId: postNewTransaction
+      requestBody:
+        $ref: "#/components/requestBodies/NewTransaction"
+      responses:
+        "200":
+          description: Transaction was successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      transaction:
+                        allOf:
+                          - $ref: "#/components/schemas/Transaction"
+                          - type: object
+                            properties:
+                              currency:
+                                type: string
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+security:
+  - token: []
+components:
+  securitySchemes:
+    token:
+      type: http
+      description: API key to identify client
+      scheme: bearer
+      bearerFormat: JWT
+  requestBodies:
+    Username:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+    Label:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              label:
+                type: string
+    NewTransaction:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              source:
+                type: string
+                description: ID of Account to transact from
+              target:
+                type: string
+                description: ID of Account to transact to
+              amount:
+                type: number
+                format: float
+                description: Amount to transact
+              description:
+                type: string
+                description: Transaction message
+              nonce:
+                type: string
+                description: Random string to identify request (subsequent requests with same nonce will be dropped)
+  schemas:
+    Model:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique ID refering to this object
+        timestamp:
+          type: integer
+          format: int32
+          description: Timestamp of object creation
+    User:
+      allOf:
+        - $ref: "#/components/schemas/Model"
+        - type: object
+          properties:
+            username:
+              type: string
+              description: User selected name
+            email:
+              type: string
+              description: User email address
+    Account:
+      allOf:
+        - $ref: "#/components/schemas/Model"
+        - type: object
+          properties:
+            owner:
+              type: string
+              description: ID of the User that owns this account
+            label:
+              type: string
+              description: User selected account label
+            balance:
+              type: number
+              format: float
+              description: Account balance
+            currency:
+              $ref: "#/components/schemas/Currency"
+    Currency:
+      allOf:
+        - $ref: "#/components/schemas/Model"
+        - type: object
+          properties:
+            name:
+              type: string
+            symbol:
+              type: string
+            type:
+              type: string
+              enum:
+              - prefix
+              - suffix
+            resolution:
+              type: integer
+    Transaction:
+      allOf:
+        - $ref: "#/components/schemas/Model"
+        - type: object
+          properties:
+            source:
+              type: string
+              description: Transaction source Account ID
+            target:
+              type: string
+              description: Transaction target Account ID
+            amount:
+              type: number
+              format: float
+              description: Transacted amount
+            currency:
+              $ref: "#/components/schemas/Currency"
+            description:
+              type: string
+              description: Transaction description
+            status:
+              type: string
+              description: Transaction status
+              enum:
+                - awaiting
+                - finished
+                - rejected
+                - stalled
+    Response:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Response success state
+    ErrorResponse:
+      allOf:
+      - $ref: "#/components/schemas/Response"
+      - type: object
+        properties:
+          message:
+            type: string
+            description: Error message
+

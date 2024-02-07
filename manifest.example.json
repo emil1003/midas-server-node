@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "hostname": "midas.example.com",
+    "providerVersion": "midas-server-node@1.0.0",
+    "providerName": "Example Midas Provider",
+    "scopes": [
+        "read",
+        "modify",
+        "transact",
+        "admin"
+    ]
+}
+

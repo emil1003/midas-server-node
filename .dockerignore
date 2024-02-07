@@ -1,0 +1,11 @@
+.vscode
+.git
+node_modules
+npm-debug.log
+
+.env
+example.env
+manifest.json
+manifest.example.json
+
+build
